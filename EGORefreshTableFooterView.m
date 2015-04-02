@@ -88,7 +88,7 @@
 }
 
 - (id)initWithFrame:(CGRect)frame  {
-    return [self initWithFrame:frame arrowImageName:@"blueArrowReversal.png" textColor:TEXT_COLOR];
+    return [self initWithFrame:frame arrowImageName:@"blueArrowReversal" textColor:TEXT_COLOR];
 }
 
 #pragma mark -
@@ -99,9 +99,6 @@
 	
 	switch (aState) {
 		case EGOOFooterPullRefreshPulling:
-			
-			//_statusLabel.text = NSLocalizedString(@"Release to refresh...", @"Release to refresh status");
-            
             _statusLabel.text = @"松开即可加载";
 			[CATransaction begin];
 			[CATransaction setAnimationDuration:FLIP_ANIMATION_DURATION];
@@ -109,8 +106,8 @@
 			[CATransaction commit];
 			break;
 		case EGOOFooterPullRefreshNormal:
-			
 			if (_state == EGOOFooterPullRefreshPulling) {
+                
 				[CATransaction begin];
 				[CATransaction setAnimationDuration:FLIP_ANIMATION_DURATION];
 				_arrowImage.transform = CATransform3DIdentity;
@@ -129,8 +126,6 @@
 			
 			break;
 		case EGOOFooterPullRefreshLoading:
-			
-			//_statusLabel.text = NSLocalizedString(@"Loading...", @"Loading Status");
             _statusLabel.text = @"正在加载...";
 			[_activityView startAnimating];
 			[CATransaction begin];
@@ -153,32 +148,32 @@
 - (void)egoRefreshScrollViewDidScroll:(UIScrollView *)scrollView {	
 	
 	if (_state == EGOOFooterPullRefreshLoading) {
-		CGFloat offset = MAX(scrollView.contentOffset.y, 0);
+        
+        CGFloat offset = MAX(scrollView.contentOffset.y + scrollView.frame.size.height - scrollView.contentSize.height , 0);
 		offset = MIN(offset, 60);
 		scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, offset, 0.0f);
-		
 	} else if (scrollView.isDragging) {
 		
+        CGFloat scrollHight = MIN(scrollView.frame.size.height, scrollView.contentSize.height);
+        
 		BOOL _loading = NO;
 		if ([_delegate respondsToSelector:@selector(egoRefreshTableFooterDataSourceIsLoading:)]) {
 			_loading = [_delegate egoRefreshTableFooterDataSourceIsLoading:self];
 		}
 		
 		if (_state == EGOOFooterPullRefreshPulling &&
-            scrollView.frame.size.height + scrollView.contentOffset.y < scrollView.contentSize.height + 65.0f &&
-            scrollView.frame.size.height + scrollView.contentOffset.y > scrollView.contentSize.height && !_loading) {
+            scrollHight + scrollView.contentOffset.y < scrollView.contentSize.height + 65.0f &&
+            scrollHight + scrollView.contentOffset.y > scrollView.contentSize.height && !_loading) {
 			[self setState:EGOOFooterPullRefreshNormal];
 		} else if (_state == EGOOFooterPullRefreshNormal &&
-                   scrollView.frame.size.height + scrollView.contentOffset.y > scrollView.contentSize.height + 65.0f && !_loading) {
+                   scrollHight + scrollView.contentOffset.y > scrollView.contentSize.height + 65.0f && !_loading) {
 			[self setState:EGOOFooterPullRefreshPulling];
 		}
 		
 		if (scrollView.contentInset.top != 0) {
 			scrollView.contentInset = UIEdgeInsetsZero;
 		}
-		
 	}
-	
 }
 
 - (void)egoRefreshScrollViewDidEndDragging:(UIScrollView *)scrollView {
@@ -188,7 +183,9 @@
 		_loading = [_delegate egoRefreshTableFooterDataSourceIsLoading:self];
 	}
 	
-	if (scrollView.frame.size.height + scrollView.contentOffset.y >= scrollView.contentSize.height + 65.0f && !_loading) {
+    CGFloat scrollHight = MIN(scrollView.frame.size.height, scrollView.contentSize.height);
+    
+	if (scrollHight + scrollView.contentOffset.y >= scrollView.contentSize.height + 65.0f && !_loading) {
 		
 		if ([_delegate respondsToSelector:@selector(egoRefreshTableFooterDidTriggerRefresh:)]) {
             [_delegate egoRefreshTableFooterDidTriggerRefresh:self];
@@ -199,19 +196,18 @@
 		[UIView setAnimationDuration:0.2];
 		scrollView.contentInset = UIEdgeInsetsMake(0.0f, 0.0f, 60.0f, 0.0f);
 		[UIView commitAnimations];
-		
 	}
-	
 }
 
 - (void)egoRefreshScrollViewDataSourceDidFinishedLoading:(UIScrollView *)scrollView {	
 	
+    
 	[UIView beginAnimations:nil context:NULL];
 	[UIView setAnimationDuration:.3];
 	[scrollView setContentInset:UIEdgeInsetsMake(0.0f, 0.0f, 0.0f, 0.0f)];
 	[UIView commitAnimations];
 	
-	[self setState:EGOOFooterPullRefreshNormal];
+    [self setState:EGOOFooterPullRefreshNormal];
 
 }
 
